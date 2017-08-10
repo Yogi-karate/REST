@@ -23,10 +23,12 @@ border:1px solid black;
   
     <table id="commentApp"  class="table table-bordered table-striped">
 	<thead>
-	<tr><td><button id="add">add new thing</button></td></tr>
+	<tr><td><input type="text" id="name" placeholder="employee name"></td><td><input type="text" id="role" placeholder="employee role"></td></tr>
+	<tr><td><button id="add">add new thing</button></td><td><button id="delete">delete</button></td></tr>
 	<tr class="danger">
 	<th>ID</th>
 	<th>Name</th>
+	<th>Role</th>
 	</tr>
 	</thead>
 <tbody id="list"></tbody>
@@ -35,12 +37,21 @@ border:1px solid black;
 <script type="text/template" id="comment-template">
 <td><%- id %></td>
 <td><%- name %></td>
+<td><%- role %></td>
+<td><input type="checkbox"></td>
 </script>
       <script type = "text/javascript">
              
-     var MyModel = Backbone.Model.extend(
-	 {
-	  
+     var MyModel = Backbone.Model.extend({
+		 defaults: {
+			    id:'',
+		        name: '',
+		        role: '',
+		        sel:''
+		
+				
+		      }
+			
 	 });
     var MyCollection = Backbone.Collection.extend({
         model : MyModel,
@@ -53,68 +64,165 @@ border:1px solid black;
         }
        
     });
-
 	
-	var stuff=new MyCollection();
-	     
-
-	
-      
+	var stuff=new MyCollection();    
+	var coll=new MyCollection();   
 	commView = Backbone.View.extend({
       tagName: 'tr',
       template: _.template($('#comment-template').html()),
       render: function(){
         this.$el.html(this.template(this.model.toJSON()));
         return this; // enable chained calls
-      }
+      },  
+      events: {
+		   
+ 		 'click [type="checkbox"]': 'change'
+ 	
+       },
+  
+   	  change: function(e){
+ 	var xx=this.model;
+ 	 if (e.currentTarget.checked == true)
+ 	 {
+ 		 e.currentTarget.value = "true";
+  xx.set("sel","checked");
+  coll.add(xx);
+ 	 }
+   else
+   {
+ 	  	xx.set("sel","unchecked");
+ 	  	coll.remove(xx);
+     e.currentTarget.value = "false";
+   }
+ 	
+   }
     });
 	commview = new commView();
 	
 	
+	
+	 var collectionJSON;
+
+	
 	 commApp = Backbone.View.extend({
       el: '#commentApp',
       initialize: function () {
+    	
+    	  stuff.on('add', this.addAll, this);
+	       stuff.on('reset',  this.addAll, this);
+		   stuff.on('remove',  this.addAll, this);
 	    stuff.fetch({
+	    	reset:true,
   success: function (collection, response) {
    for(var i=0;i<response.length;i++)
    {
 	  var model1=new MyModel({
 	  id: response[i].no,
 	  name: response[i].name,
+	  role: response[i].role,
+	  sel:" "
 	  }); 
         var view = new  commView({model: model1});
        $('#list').append(view.render().el);
+
    }
 		
   }                 
 }); 
-      
-   
       },
       events:
     	  {
-    	  "click #add":"addNew"
+    	  "click #add":"addNew",
+    	  "click #delete":"deleteSelected"
     	  },
     	  
     	  addNew: function(){
-    alert("a");
     		Backbone.ajax({
     			    dataType: "json",
     			    url: "http://localhost:8080/JavaAPI/rest/hell",
-    			    type: "GET/POST", 
+    			    type: "GET", 
     			    contentType: "application/json",
-    			    data: {name:"test",no: 15},
+    			    data:{name: $("#name").val(),role: $("#role").val()},
     		success: function(val)
     		{
     			console.log(val);
+    			$('#list').html("");
+    			  stuff.fetch({
+    	
+    			    	reset:true,
+					  success: function (collection, response) {
+					   for(var i=0;i<response.length;i++)
+					   {
+						  var model1=new MyModel({
+						  id: response[i].no,
+						  name: response[i].name,
+						  role: response[i].role,
+						  sel:""
+						  }); 
+					        var view = new  commView({model: model1});
+					       $('#list').append(view.render().el); }
+					      					
+					  }         
+
+		});
     		}
-    			});
-  
-    	  }
-         
-       
+    	   
 	
     });
+    	  },
+    	  addOne: function(book){
+    	        var view = new commView({model: book});
+    	        $('list').append(view.render().el);
+    	      },
+    		   
+    		  addAll: function(){
+    	  //    this.$('#list').html(''); // clean the book list
+    	       stuff.each(this.addOne, this);
+    	      },
+    	      
+    	  deleteSelected: function()
+    	  { 
+    		  var arr = coll.pluck('name');
+    		  var Json = JSON.stringify(arr);
+    			Backbone.ajax({
+    			    dataType: "json",
+    			    url: "http://localhost:8080/JavaAPI/rest/delete",
+    			    type: "GET", 
+    			    contentType: "application/json",
+    			    data:{arr: Json},
+    		success: function(val)
+    		{
+    			console.log(val);
+    			$('#list').html("");
+    			  stuff.fetch({
+    			    	reset:true,
+					  success: function (collection, response) {
+					   for(var i=0;i<response.length;i++)
+					   {
+						  var model1=new MyModel({
+						  id: response[i].no,
+						  name: response[i].name,
+						  role: response[i].role,
+						  sel:""
+						  }); 
+					        var view = new  commView({model: model1});
+					       $('#list').append(view.render().el); }
+					      					
+					  }         
+
+		});
+    		}
+    			    	
+    });
+    		  
+    			console.log(arr);
+  
+    	  
+    		  
+    	  }
+    	   
+
+    	  });
 
 	commapp=new commApp();
 	
