@@ -21,7 +21,7 @@ public void deleteFromDB(@QueryParam("arr") String array) throws Exception
 
   System.out.println(array);
   
-  StringTokenizer st = new StringTokenizer(array,"\"![],?._'@ ");
+  StringTokenizer st = new StringTokenizer(array,"\"![],?._'@");
   PreparedStatement ps=null;
    
 Connection connection = DriverManager.getConnection(
@@ -32,7 +32,8 @@ Connection connection = DriverManager.getConnection(
 	   String name=st.nextToken();
 	 // System.out.println(st.nextToken()); 
 	  
-ps=connection.prepareStatement("delete from employee where name='"+name+"';");  
+ps=connection.prepareStatement("delete from employee where name=?");  
+ps.setString(1, name);
 ps.executeUpdate(); 
   }
   

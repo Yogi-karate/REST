@@ -18,13 +18,26 @@
    table,tr,td,th{
 border:1px solid black; 
  }
+ .edit
+ {
+ display:none;
+ },
+ .show
+ {
+ display:block;
+ }
+ 
    </style>
    <body>
   
     <table id="commentApp"  class="table table-bordered table-striped">
 	<thead>
-	<tr><td><input type="text" id="name" placeholder="employee name"></td><td><input type="text" id="role" placeholder="employee role"></td></tr>
-	<tr><td><button id="add">add new thing</button></td><td><button id="delete">delete</button></td></tr>
+	<tr>
+	<td><input type="text" id="name" placeholder="employee name"></td>
+	<td><input type="text" id="role" placeholder="employee role"></td>
+	<td><button id="add" class="btn btn-success">add new record</button></td>
+	<td><button id="delete" class="btn btn-danger">delete</button></td>
+	</tr>
 	<tr class="danger">
 	<th>ID</th>
 	<th>Name</th>
@@ -36,196 +49,246 @@ border:1px solid black;
 </table>
 <script type="text/template" id="comment-template">
 <td><%- id %></td>
-<td><%- name %></td>
-<td><%- role %></td>
+<td><label class="value"><%- name %></label><input class="ed edit" type="text" id="x" value="<%= name %>" ></td>
+<td><label class="value"><%- role %></label><input class="ed edit" type="text" id="y" value="<%= role %>" ></td>
 <td><input type="checkbox"></td>
+	<td><button class="edits" class="btn btn-warning">edit</button></td>
+	<td><button class="save edit" class="btn btn-success">save</button></td>
+
 </script>
       <script type = "text/javascript">
-             
-     var MyModel = Backbone.Model.extend({
-		 defaults: {
-			    id:'',
-		        name: '',
-		        role: '',
-		        sel:''
-		
-				
-		      }
-			
-	 });
-    var MyCollection = Backbone.Collection.extend({
-        model : MyModel,
-		el: '#commentApp',
-		url:'http://localhost:8080/JavaAPI/rest/hello',
-        parse: function(response) {
-		
-		console.log(response);
-         return response;
-        }
-       
-    });
-	
-	var stuff=new MyCollection();    
-	var coll=new MyCollection();   
-	commView = Backbone.View.extend({
-      tagName: 'tr',
-      template: _.template($('#comment-template').html()),
-      render: function(){
-        this.$el.html(this.template(this.model.toJSON()));
-        return this; // enable chained calls
-      },  
-      events: {
-		   
- 		 'click [type="checkbox"]': 'change'
+      var MyModel = Backbone.Model.extend({
+ 		 defaults: {
+ 			    id:'',
+ 		        name: '',
+ 		        role: '',
+ 		        sel:''
+ 		
+ 				
+ 		      }
+ 			
+ 	 });
+     var MyCollection = Backbone.Collection.extend({
+         model : MyModel,
+ 		el: '#commentApp',
+ 		url:'http://localhost:8080/JavaAPI/rest/hello'
+ 		
+     });
  	
-       },
-  
-   	  change: function(e){
- 	var xx=this.model;
- 	 if (e.currentTarget.checked == true)
- 	 {
- 		 e.currentTarget.value = "true";
-  xx.set("sel","checked");
-  coll.add(xx);
- 	 }
-   else
-   {
- 	  	xx.set("sel","unchecked");
- 	  	coll.remove(xx);
-     e.currentTarget.value = "false";
-   }
- 	
-   }
-    });
-	commview = new commView();
-	
-	
-	
-	 var collectionJSON;
-
-	
-	 commApp = Backbone.View.extend({
-      el: '#commentApp',
-      initialize: function () {
-    	
-    	  stuff.on('add', this.addAll, this);
-	       stuff.on('reset',  this.addAll, this);
-		   stuff.on('remove',  this.addAll, this);
-	    stuff.fetch({
+ 	var stuff=new MyCollection();    
+    stuff.fetch({
 	    	reset:true,
-  success: function (collection, response) {
-   for(var i=0;i<response.length;i++)
-   {
+success: function (collection, response) {
+for(var i=0;i<response.length;i++)
+{
 	  var model1=new MyModel({
-	  id: response[i].no,
+	  id: i+1,
 	  name: response[i].name,
 	  role: response[i].role,
-	  sel:" "
+	  sel:""
 	  }); 
-        var view = new  commView({model: model1});
-       $('#list').append(view.render().el);
+     var view = new  commView({model: model1});
+    $('#list').append(view.render().el);
 
-   }
+}
 		
-  }                 
+}                 
 }); 
-      },
-      events:
-    	  {
-    	  "click #add":"addNew",
-    	  "click #delete":"deleteSelected"
-    	  },
-    	  
-    	  addNew: function(){
-    		Backbone.ajax({
-    			    dataType: "json",
-    			    url: "http://localhost:8080/JavaAPI/rest/hell",
-    			    type: "GET", 
-    			    contentType: "application/json",
-    			    data:{name: $("#name").val(),role: $("#role").val()},
-    		success: function(val)
-    		{
-    			console.log(val);
-    			$('#list').html("");
-    			  stuff.fetch({
-    	
-    			    	reset:true,
-					  success: function (collection, response) {
-					   for(var i=0;i<response.length;i++)
-					   {
-						  var model1=new MyModel({
-						  id: response[i].no,
-						  name: response[i].name,
-						  role: response[i].role,
-						  sel:""
-						  }); 
-					        var view = new  commView({model: model1});
-					       $('#list').append(view.render().el); }
-					      					
-					  }         
+ 	
+ 	var coll=new MyCollection();   
+ 	var coll1=new MyCollection();
+ 	
+ 	commView = Backbone.View.extend({
+       tagName: 'tr',
+       template: _.template($('#comment-template').html()),
+       
+       render: function(){
+         this.$el.html(this.template(this.model.toJSON()));
+         return this; // enable chained calls
+       },  
+      initalize: function()
+      {
+    	  _.bindAll(this, "render");
+    	  this.model.bind('change', this.render);
+    	  this.model.on('change', this.render, this);
+      }, 
+            events: {
+ 		   
+  		 'click [type="checkbox"]': 'click',
+  		 'click .edits':'edit',
+  		 'click .save':'save'
+  	
+        },
 
-		});
-    		}
-    	   
-	
-    });
-    	  },
-    	  addOne: function(book){
-    	        var view = new commView({model: book});
-    	        $('list').append(view.render().el);
-    	      },
-    		   
-    		  addAll: function(){
-    	  //    this.$('#list').html(''); // clean the book list
-    	       stuff.each(this.addOne, this);
-    	      },
-    	      
-    	  deleteSelected: function()
-    	  { 
-    		  var arr = coll.pluck('name');
-    		  var Json = JSON.stringify(arr);
-    			Backbone.ajax({
-    			    dataType: "json",
-    			    url: "http://localhost:8080/JavaAPI/rest/delete",
-    			    type: "GET", 
-    			    contentType: "application/json",
-    			    data:{arr: Json},
-    		success: function(val)
-    		{
-    			console.log(val);
-    			$('#list').html("");
-    			  stuff.fetch({
-    			    	reset:true,
-					  success: function (collection, response) {
-					   for(var i=0;i<response.length;i++)
-					   {
-						  var model1=new MyModel({
-						  id: response[i].no,
-						  name: response[i].name,
-						  role: response[i].role,
-						  sel:""
-						  }); 
-					        var view = new  commView({model: model1});
-					       $('#list').append(view.render().el); }
-					      					
-					  }         
 
-		});
-    		}
-    			    	
-    });
-    		  
-    			console.log(arr);
-  
-    	  
-    		  
-    	  }
-    	   
+    	  click: function(e){
+  	var xx=this.model;
+  	 if (e.currentTarget.checked == true)
+  	 {
+  		 e.currentTarget.value = "true";
+  		coll.add(xx);
+   xx.set("sel","checked");
+   
+  	 }
+    else
+    {
+  	  	xx.set("sel","unchecked");
+  	  	coll.remove(xx);
+      e.currentTarget.value = "false";
 
-    	  });
+    }
+  	
+    },
+    edit: function()
+    {
+ this.$el.find('.ed').removeClass('edit');
+ this.$el.find('.value').addClass('edit');
+ this.$el.find('.edits').addClass('edit');
+ this.$el.find('.save').removeClass('edit');
+    },
+    
+    save: function()
+    {
+ alert(this.$el.find('#x').val());
+// this.model.get("name");
+this.model.set("name",this.$el.find('#x').val());
+ this.$el.find('.ed').addClass('edit');
+ this.$el.find('.edits').removeClass('edit');
+ this.$el.find('.value').removeClass('edit');
+ this.$el.find('.save').addClass('edit');
 
-	commapp=new commApp();
-	
+
+    }
+     });
+
+ 	 var view1 = new  commView({model: new MyModel()});
+ 	
+
+ 	
+ 	 commApp = Backbone.View.extend({
+       el: '#commentApp',
+       initialize: function () {
+     	
+     	  stuff.on('add', this.addAll, this);
+ 	       stuff.on('reset',  this.addAll, this);
+ 		   stuff.on('remove',  this.addAll, this);
+ 	 
+       },
+       events:
+     	  {
+     	  "click #add":"addNew",
+     	  "click #delete":"deleteSelected",
+     	  "click #edits": "editTable",
+     	 "click #save": "saveChanges"
+     	  },
+     	  
+     	  addNew: function(){
+     		  var name=$("#name").val();
+     		  var role=$("#role").val();
+     		  var p1 = new RegExp("^[a-zA-Z][a-zA-Z0-9]*(?:\s+[a-zA-Z][a-zA-Z0-9]+)?$");; 
+
+     		 if(p1.test(name)&&p1.test(role))
+     			 {
+     		Backbone.ajax({
+     			    dataType: "json",
+     			    url: "http://localhost:8080/JavaAPI/rest/hell",
+     			    type: "GET", 
+     			    contentType: "application/json",
+     			    data:{name: name,role: role},
+     		success: function(val)
+     		{
+     			
+     			$('#list').html("");
+     			  stuff.fetch({
+     	
+     			    	reset:true,
+ 					  success: function (collection, response) {
+ 					   for(var i=0;i<response.length;i++)
+ 					   {
+ 						  var model1=new MyModel({
+ 						  id: response[i].no,
+ 						  name: response[i].name,
+ 						  role: response[i].role,
+ 						  sel:""
+ 						  }); 
+ 					        var view = new  commView({model: model1});
+ 					       $('#list').append(view.render().el); }
+ 					      					
+ 					  }         
+
+ 		});
+     			 $('#name').val("");
+ 	     		$('#role').val("");
+ 	     		alert("you added "+val.name);
+     			
+     		}
+     	   
+     			  
+     });
+     			 }
+     		 else
+     			 {
+     			 alert("reomve special characters in all fields");
+     			 }
+     	  },
+     	  addOne: function(book){
+     	        var view = new commView({model: book});
+     	        $('list').append(view.render().el);
+     	      },
+     		   
+     		  addAll: function(){
+     	  //    this.$('#list').html(''); // clean the book list
+     	       stuff.each(this.addOne, this);
+     	      },
+     	      
+     	  deleteSelected: function()
+     	  { 
+     		  var arr = coll.pluck('name');
+     		  var Json = JSON.stringify(arr);
+     		  if(arr.length>0)
+     			  {
+     			Backbone.ajax({
+     			    dataType: "json",
+     			    url: "http://localhost:8080/JavaAPI/rest/delete",
+     			    type: "GET", 
+     			    contentType: "application/json",
+     			    data:{arr: Json},
+     		success: function(val)
+     		{
+     			console.log(val);
+     			$('#list').html("");
+     			  stuff.fetch({
+     			    	reset:true,
+ 					  success: function (collection, response) {
+ 					   for(var i=0;i<response.length;i++)
+ 					   {
+ 						  var model1=new MyModel({
+ 						  id: i+1,
+ 						  name: response[i].name,
+ 						  role: response[i].role,
+ 						  sel:""
+ 						  }); 
+ 					        var view = new  commView({model: model1});
+ 					       $('#list').append(view.render().el); }
+ 					      					
+ 					  }         
+
+ 		});
+     		}
+     			    	
+     });
+     			  }
+     		  else
+     		  alert("none deleted");
+     			console.log(arr);
+     	  
+     		  
+     	  }
+     	
+     	  });
+
+ 	commapp=new commApp();
+
 	
       </script>
       

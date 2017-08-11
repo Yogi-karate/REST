@@ -24,12 +24,9 @@ import java.sql.*;
 			"admin");
 PreparedStatement ps=connection.prepareStatement("select * from employee");  
 ResultSet rs=ps.executeQuery();  
-int count=0;
 while(rs.next())
 {
-	 count++;
 	JSONObject obj = new JSONObject();
-	obj.put("no",count);
 	obj.put("name",rs.getString(1));
 	obj.put("role",rs.getString(2));
 ar.add(obj);
